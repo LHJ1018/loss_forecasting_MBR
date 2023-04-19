@@ -1,0 +1,350 @@
+---
+title: "`r strftime(Sys.Date(), '%b %Y')`"
+subtitle: 'Loss Forecasting MBR'
+output: 
+  powerpoint_presentation:
+    reference_doc: template_16_9.pptx
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F)
+
+library(here)
+library(data.table)
+library(ggplot2)
+library(flextable)
+
+DAT_STEP = '01'
+PRE_STEP = '02'
+CUR_STEP = '03'
+
+### Parameters for the whole presentation
+CUR_CP = 6.7
+DP = readRDS(here(DAT_STEP, 'date_params.rds'))
+
+## ggplot theme
+theme_set(theme_bw())
+theme_update(text = element_text(size = 9), 
+             axis.title = element_blank(),
+             legend.position = 'bottom',
+             plot.title = element_text(size = 11, hjust = 0.5))
+
+### Parameters for each section
+
+## Go forward section
+Por_Plot_X_LB = as.Date('2021-02-28')
+Por_Plot_X_UB = DP$Period_Actual_UB
+PORT_LBS = readRDS(here(PRE_STEP, 'PORT_LBS.rds'))
+QTRS = c('2021_Q3', '2021_Q4', '2022_Q1', '2022_Q2')
+ASOFS = readRDS(here(PRE_STEP, 'ASOFS.rds'))
+
+## Act vs Exp Plots (with delinquency implied forecast)
+A_vs_E_X_LB = as.Date('2019-01-31')
+# A_vs_E_X_UB = DP$Period_Implied_UB # use this for 3 months of DLQ implied on plot
+# use this for 2 months of DLQ implied on plot
+A_vs_E_X_UB = lubridate::floor_date(DP$Period_Implied_UB, 'month') - 1
+A_vs_E_Lab_LB = as.Date('2021-07-31')
+
+## Loss by MoB
+YRS_QTRS = c('2018', '2019', '2020',
+             '2021_Q1', '2021_Q2', '2021_Q3', '2021_Q4', 
+             '2022_Q1', '2022_Q2', '2022_Q3', '2022_Q4')
+Loss_X_UB = 48
+
+## DLQ by MoB
+DLQ_X_UB = 12
+
+# Plotting functions
+source(here(CUR_STEP, 'plot_fns.R'))
+```
+
+
+
+
+## Segment Originations and Actual-v-Model Performance
+```{r}
+df = readRDS(here(PRE_STEP, 'summary.rds'))
+summary_table(df)
+```
+
+
+
+
+## Go-Forward Expectations -- Core T1-T4 -- CP `r CUR_CP`
+```{r, fig.height=5, fig.width=10.6, dpi=320}
+# Datasets for go forward section - overall
+df_v = readRDS(here(PRE_STEP, 'C_Y_M.rds'))
+df_p = readRDS(here(PRE_STEP, 'C_Y_A_por.rds'))
+aDF = readRDS(here(PRE_STEP, 'aC_Y_A_por.rds'))
+
+DF_V = df_v[orig_grp %in% QTRS]
+DF_P = df_p[between(asofdate, Por_Plot_X_LB, Por_Plot_X_UB)]
+
+forward_vin_por_plot(DF_V, DF_P, aDF)
+```
+
+## Go-Forward Expectations -- Tier 1 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+# Datasets for go forward section - By Tier
+df_v = readRDS(here(PRE_STEP, 'C_Y_M_tier.rds'))
+df_p = readRDS(here(PRE_STEP, 'C_Y_A_por_tier.rds'))
+aDF = readRDS(here(PRE_STEP, 'aC_Y_A_por_tier.rds'))
+
+DF_V = df_v[orig_grp %in% QTRS]
+DF_P = df_p[between(asofdate, Por_Plot_X_LB, Por_Plot_X_UB)]
+
+TIER = 'Tier 1'
+forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment == TIER])
+```
+
+## Go-Forward Expectations -- Tier 2 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+TIER = 'Tier 2'
+forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment == TIER])
+```
+
+## Go-Forward Expectations -- Tier 3 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+TIER = 'Tier 3'
+forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment == TIER])
+```
+
+## Go-Forward Expectations -- Tier 4 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+TIER = 'Tier 4'
+forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment == TIER])
+```
+
+## Risk Multiple by Tier -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=6, fig.height=5}
+bDF = readRDS(here(PRE_STEP, 'bC_Y_A_por_tier.rds'))
+mul_by_tier_plot(bDF)
+```
+
+## Go-Forward Expectations -- Term 24 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+# Datasets for go forward section - By Term
+df_v = readRDS(here(PRE_STEP, 'C_Y_M_term.rds'))
+df_p = readRDS(here(PRE_STEP, 'C_Y_A_por_term.rds'))
+aDF = readRDS(here(PRE_STEP, 'aC_Y_A_por_term.rds'))
+
+DF_V = df_v[orig_grp %in% QTRS]
+DF_P = df_p[between(asofdate, Por_Plot_X_LB, Por_Plot_X_UB)]
+
+TERM = 24
+forward_vin_por_plot(DF_V[term == TERM], DF_P[term == TERM], aDF[term == TERM])
+```
+
+## Go-Forward Expectations -- Term 36 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+TERM = 36
+forward_vin_por_plot(DF_V[term == TERM], DF_P[term == TERM], aDF[term == TERM])
+```
+
+## Go-Forward Expectations -- Term 48 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+TERM = 48
+forward_vin_por_plot(DF_V[term == TERM], DF_P[term == TERM], aDF[term == TERM])
+```
+
+## Go-Forward Expectations -- Term 60 -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=10.6, fig.height=5}
+TERM = 60
+forward_vin_por_plot(DF_V[term == TERM], DF_P[term == TERM], aDF[term == TERM])
+```
+
+
+
+
+
+## Section 1: Core, Applying Current Policy
+
+## Core T1-T4 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'C_Y_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
+
+## Tier 1 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset - By Tier
+df = readRDS(here(PRE_STEP, 'C_Y_A_tier.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+
+TIER = 'Tier 1'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 2 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 2'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 3 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 3'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 4 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 4'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## $ Loss Rate by MoB vs Exp (`r DP$Expectation_Range`) -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'C_Y_M.rds'))
+cum_loss_rates_plot(df[orig_grp %in% c('Expectation', YRS_QTRS) & monthonbook <= Loss_X_UB])
+```
+
+## $ DQ 31+ Rate by MoB -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+dlq_30_rates_plot(df[orig_grp %in% YRS_QTRS & monthonbook <= DLQ_X_UB]) +
+  scale_x_continuous(breaks = seq(0, DLQ_X_UB, by = 2))
+```
+
+
+
+
+## Section 2: Core, Without Current Policy
+
+## Core T1-T5 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'C_N_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
+
+## Tier 1 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset - By Tier
+df = readRDS(here(PRE_STEP, 'C_N_A_tier.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+
+TIER = 'Tier 1'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 2 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 2'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 3 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 3'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 4 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 4'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## Tier 5 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+TIER = 'Tier 5'
+act_vs_exp_w_dlq_plot(DF[segment == TIER])
+```
+
+## $ Loss Rate by MoB vs Exp (`r DP$Expectation_Range`) -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'C_N_M.rds'))
+cum_loss_rates_plot(df[orig_grp %in% c('Expectation', YRS_QTRS) & monthonbook <= Loss_X_UB])
+```
+
+## $ DQ 31+ Rate by MoB -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+dlq_30_rates_plot(df[orig_grp %in% YRS_QTRS & monthonbook <= DLQ_X_UB]) +
+  scale_x_continuous(breaks = seq(0, DLQ_X_UB, by = 2))
+```
+
+
+
+
+## Section 3: Total Portfolio, Applying Current Policy
+
+## Total Portfolio -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'T_Y_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
+
+## $ Loss Rate by MoB vs Exp (`r DP$Expectation_Range`) -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'T_Y_M.rds'))
+cum_loss_rates_plot(df[orig_grp %in% c('Expectation', YRS_QTRS) & monthonbook <= Loss_X_UB])
+```
+
+## $ DQ 31+ Rate by MoB -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+dlq_30_rates_plot(df[orig_grp %in% YRS_QTRS & monthonbook <= DLQ_X_UB]) +
+  scale_x_continuous(breaks = seq(0, DLQ_X_UB, by = 2))
+```
+
+
+
+
+## Section 4: Total Portfolio, Without Current Policy
+
+## Total Portfolio -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'T_N_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
+
+## $ Loss Rate by MoB vs Exp (`r DP$Expectation_Range`) -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'T_N_M.rds'))
+cum_loss_rates_plot(df[orig_grp %in% c('Expectation', YRS_QTRS) & monthonbook <= Loss_X_UB])
+```
+
+## $ DQ 31+ Rate by MoB -- CP `r CUR_CP`
+```{r, dpi=320, fig.width=8, fig.height=5}
+dlq_30_rates_plot(df[orig_grp %in% YRS_QTRS & monthonbook <= DLQ_X_UB]) +
+  scale_x_continuous(breaks = seq(0, DLQ_X_UB, by = 2))
+```
+
+
+
+
+## Section 5: Monitoring Populations Removed by Recent CPs
+
+## CP 6.5-6.6
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'CP65_N_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
+
+## CP 6.7
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'CP67_N_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
