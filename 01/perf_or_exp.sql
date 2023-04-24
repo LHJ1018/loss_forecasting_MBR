@@ -41,6 +41,29 @@ select r.lt_payoffuid
             when r.tradelineunsecuredinstallmentloansbalance + r.tradelinerevolvingtradesbalance < 10000
             and r.PRICINGTIER != 'TH' then 0
             else 1 end as cp67_flag
+      
+      , /* CP6.8 */
+       case
+            /* Can't divide by zero for credit limit and summary balance */
+            when b.V71_RE28S < 0.01 and r.PRICINGTIER != 'TH' then 0
+            when r.tradelineunsecuredinstallmentloansbalance + r.tradelinerevolvingtradesbalance < 0.01 and r.PRICINGTIER != 'TH' then 0
+            /* Tier 6 */
+            when r.loantier='T6' then 0
+            /* Incremental credit requested > 1.3 */
+            when r.requested_loan_amount > (1.3 * b.V71_RE28S)  and r.PRICINGTIER != 'TH' then 0
+            /* fico < 640 */
+            when r.fico_score < 640  and r.PRICINGTIER != 'TH' then 0
+            /* credit history < 6yrs */
+            when r.at20s_mo_since_oldest_trade_opened < 72  and r.PRICINGTIER != 'TH' then 0
+            /* LPE */
+            when r.loan_intent not in ('core') and r.PRICINGTIER != 'TH' then 0
+            /* requested loan amount / summary balance > 1.3 */
+            when r.requested_loan_amount> 1.3*(r.tradelineunsecuredinstallmentloansbalance + r.tradelinerevolvingtradesbalance)
+            and r.PRICINGTIER != 'TH' then 0
+            /* summary balance < 10k*/
+            when r.tradelineunsecuredinstallmentloansbalance + r.tradelinerevolvingtradesbalance < 10000
+            and r.PRICINGTIER != 'TH' then 0
+            else 1 end as cp68_flag
      
      , case when f.hk_h_appl is not null then 1 else 0 end as fraud_flag
      , r.pricingtier
@@ -91,6 +114,7 @@ select date_trunc('month', l.originationdate) as orig_mth
      , l.term
      , l.cp65_66_flag
      , l.cp67_flag
+     , l.cp68_flag
      , l.fraud_flag
      , case when segment = 'Tier 3' and l.term = 60 then 0
             when segment = 'Tier 4' and l.term >= 48 then 0
@@ -114,6 +138,6 @@ left join cron_store.dsh_loan_portfolio_expectations e
   and e.sim_name = 'v1.0 Base Case'
   and (e.asofdate <= $ASOF_UB or e.monthonbook <= $MOB_UB)
   
-group by 1, 2, 3, 4, 5, 6, 7, 8, 9
-order by 1, 2, 3, 4, 5, 6, 7, 8, 9
+group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+order by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 ;
