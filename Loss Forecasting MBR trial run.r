@@ -311,9 +311,9 @@ saveRDS(RV, file.path(root, CUR_STEP, 'C_N_A_tier.rds'))
 
 # COMMAND ----------
 
-### Build datasets for Total Portfolio - CP applied
-DF = df[cp_67_flag == 1]
-EXP = exp[cp_67_flag == 1]
+### Build datasets for Total Portfolio - CP applied (choose from cp67 or cp68)
+DF = df[cp_68_flag == 1]
+EXP = exp[cp_68_flag == 1]
 
 # COMMAND ----------
 
