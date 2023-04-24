@@ -224,11 +224,11 @@ ROW_ORDER = c(paste('Tier' , 1:5),
 
 # COMMAND ----------
 
-### Build datasets for Core - CP applied
+### Build datasets for Core - CP applied (choose from cp67 or cp68)
 DF = df[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
-          cp_67_flag == 1 & price_flag == 1]
+          cp_68_flag == 1 & price_flag == 1]
 EXP = exp[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
-            cp_67_flag == 1 & price_flag == 1]
+            cp_68_flag == 1 & price_flag == 1]
 
 # COMMAND ----------
 
