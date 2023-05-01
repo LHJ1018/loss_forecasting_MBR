@@ -16,7 +16,7 @@ getwd()
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC 
+# MAGIC
 # MAGIC # Install ODBC drivers for Snowflake
 # MAGIC curl https://sfc-repo.snowflakecomputing.com/odbc/linux/2.25.7/snowflake-odbc-2.25.7.x86_64.deb -o snowflake-odbc-2.25.7.x86_64.deb
 # MAGIC sudo dpkg -i snowflake-odbc-2.25.7.x86_64.deb
@@ -78,6 +78,11 @@ detach(package:lubridate, unload=T)
 
 # saveRDS(DP, file.path(root, CUR_STEP, 'date_params.rds'))
 saveRDS(DP, file.path(root, CUR_STEP, 'date_params.rds'))
+
+# COMMAND ----------
+
+DP = readRDS(file.path(root, CUR_STEP, 'date_params.rds'))
+DP
 
 # COMMAND ----------
 
@@ -201,6 +206,10 @@ setDT(df)
 
 # source(file.path(root, CUR_STEP, 'build_fns.R'))
 source('build_fns.R')
+
+# COMMAND ----------
+
+DP
 
 # COMMAND ----------
 
