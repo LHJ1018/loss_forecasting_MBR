@@ -81,8 +81,80 @@ saveRDS(DP, file.path(root, CUR_STEP, 'date_params.rds'))
 
 # COMMAND ----------
 
+
 DP = readRDS(file.path(root, CUR_STEP, 'date_params.rds'))
 DP
+
+# COMMAND ----------
+
+
+query = readr::read_file(file.path(root, CUR_STEP, 'perf_or_exp.sql'))
+ORIG_LB = as.Date('2000-01-01') # date in distant past, essentially no lower bound
+ORIG_UB = DP$Period_Actual_UB
+ASOF_UB = DP$Period_Implied_UB
+MOB_UB = -1 # set MoB condition to false, as we filter by asofdate for actual performance
+
+set_param(ORIG_LB)
+set_param(ORIG_UB)
+set_param(ASOF_UB)
+set_param(MOB_UB)
+
+df = dbGetQuery(CONN, query)
+
+setDT(df)
+setnames(df, snakecase::to_snake_case)
+
+df8 = clean_df(df)
+
+# COMMAND ----------
+
+# df678 256565 df78 218201 df68 207558 df8 164370
+DF678 = df678[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+          cp_68_flag == 1 & price_flag == 1]
+DF78 = df78[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+          cp_68_flag == 1 & price_flag == 1]
+DF68 = df68[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+          cp_68_flag == 1 & price_flag == 1]
+DF8 = df8[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+          cp_68_flag == 1 & price_flag == 1]
+
+# COMMAND ----------
+
+query = readr::read_file(file.path(root, CUR_STEP, 'perf_or_exp.sql'))
+ORIG_LB = DP$Expectation_LB
+ORIG_UB = DP$Expectation_UB
+ASOF_UB = as.Date('2000-01-01') # distant past -> asofdate condition = false, as we filter by MoB for expectation
+MOB_UB = 60 # longest term we offer
+
+set_param(ORIG_LB)
+set_param(ORIG_UB)
+set_param(ASOF_UB)
+set_param(MOB_UB)
+
+## Pull data
+df = dbGetQuery(CONN, query)
+
+setDT(df)
+setnames(df, snakecase::to_snake_case)
+
+exp678 = clean_df(df)
+
+# COMMAND ----------
+
+# exp678 75274 exp78 56910 exp68 58316 exp8 39650
+EXP678 = exp678[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+            cp_68_flag == 1 & price_flag == 1]
+EXP68 = exp68[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+            cp_68_flag == 1 & price_flag == 1]
+EXP78 = exp78[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+            cp_68_flag == 1 & price_flag == 1]
+EXP8 = exp8[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+            cp_68_flag == 1 & price_flag == 1]
+
+
+# COMMAND ----------
+
+all.equal(EXP68[, -6], EXP678[, -c(6, 7)])
 
 # COMMAND ----------
 
@@ -215,7 +287,7 @@ DP$Period_Implied_UB = max(df$asofdate)
 
 # COMMAND ----------
 
-DP
+source('build_fns.R')
 
 # COMMAND ----------
 
@@ -238,6 +310,136 @@ DF = df[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
           cp_68_flag == 1 & price_flag == 1]
 EXP = exp[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
             cp_68_flag == 1 & price_flag == 1]
+
+# COMMAND ----------
+
+# DBTITLE 1,Check C_Y_M
+RV678 = agg_vintages(DF678[asofdate <= DP$Period_Actual_UB], 'monthonbook')
+
+ERV678 = agg_df(EXP678, 'monthonbook')
+ERV678[, ':='(act_cum_co_rate = exp_cum_co_rate, orig_grp = 'Expectation', orig_fn = 'exp')]
+
+RV678 = rbindlist(list(ERV678, RV678), use.names = T)
+
+
+RV68 = agg_vintages(DF68[asofdate <= DP$Period_Actual_UB], 'monthonbook')
+
+ERV68 = agg_df(EXP68, 'monthonbook')
+ERV68[, ':='(act_cum_co_rate = exp_cum_co_rate, orig_grp = 'Expectation', orig_fn = 'exp')]
+
+RV68 = rbindlist(list(ERV68, RV68), use.names = T)
+
+
+
+RV8 = agg_vintages(DF8[asofdate <= DP$Period_Actual_UB], 'monthonbook')
+
+ERV8 = agg_df(EXP8, 'monthonbook')
+ERV8[, ':='(act_cum_co_rate = exp_cum_co_rate, orig_grp = 'Expectation', orig_fn = 'exp')]
+
+RV8 = rbindlist(list(ERV8, RV8), use.names = T)
+
+# COMMAND ----------
+
+identical(RV68, RV678)
+
+# COMMAND ----------
+
+# DBTITLE 1,Check C_Y_A_port, aC_Y_A_port
+RV678 = agg_portfolios(DF678, PORT_LBS, 'asofdate')
+aRV678 = agg_intervals(RV678, ASOFS, c('por', 'asofdate'))
+
+RV68 = agg_portfolios(DF68, PORT_LBS, 'asofdate')
+aRV68 = agg_intervals(RV68, ASOFS, c('por', 'asofdate'))
+
+RV78 = agg_portfolios(DF78, PORT_LBS, 'asofdate')
+aRV78 = agg_intervals(RV78, ASOFS, c('por', 'asofdate'))
+
+RV8 = agg_portfolios(DF8, PORT_LBS, 'asofdate')
+aRV8 = agg_intervals(RV8, ASOFS, c('por', 'asofdate'))
+
+# COMMAND ----------
+
+identical(aRV68, aRV78)
+
+# COMMAND ----------
+
+# DBTITLE 1,Check aC_Y_A_por_tier
+RV678 = agg_portfolios(DF678, PORT_LBS, c('segment', 'asofdate'))
+aRV678 = agg_intervals(RV678, ASOFS, c('segment', 'por', 'asofdate'))
+bRV678 = agg_intervals(RV678, c(DP$Period_LB, DP$Period_Actual_UB), c('segment', 'por', 'asofdate'))
+names(bRV678)[3] = 'mul'
+
+RV68 = agg_portfolios(DF68, PORT_LBS, c('segment', 'asofdate'))
+aRV68 = agg_intervals(RV68, ASOFS, c('segment', 'por', 'asofdate'))
+bRV68 = agg_intervals(RV68, c(DP$Period_LB, DP$Period_Actual_UB), c('segment', 'por', 'asofdate'))
+names(bRV68)[3] = 'mul'
+
+RV8 = agg_portfolios(DF8, PORT_LBS, c('segment', 'asofdate'))
+aRV8 = agg_intervals(RV8, ASOFS, c('segment', 'por', 'asofdate'))
+bRV8 = agg_intervals(RV8, c(DP$Period_LB, DP$Period_Actual_UB), c('segment', 'por', 'asofdate'))
+names(bRV8)[3] = 'mul'
+
+# COMMAND ----------
+
+identical(bRV68, bRV678)
+
+# COMMAND ----------
+
+# DBTITLE 1,Check C_Y_M_term
+
+
+# COMMAND ----------
+
+## Cum Act CO by Quarter/Year
+RV = agg_vintages(DF[asofdate <= DP$Period_Actual_UB], 'monthonbook')
+
+ERV = agg_df(EXP, 'monthonbook')
+ERV[, ':='(act_cum_co_rate = exp_cum_co_rate, orig_grp = 'Expectation', orig_fn = 'exp')]
+
+RV = rbindlist(list(ERV, RV), use.names = T)
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_M.rds'))
+
+# Cum Act CO by Quarter/Year - By Tier
+RV = agg_vintages(DF[asofdate <= DP$Period_Actual_UB], c('segment', 'monthonbook'))
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_M_tier.rds'))
+
+# Cum Act CO by Quarter/Year - By Term
+RV = agg_vintages(DF[asofdate <= DP$Period_Actual_UB], c('term', 'monthonbook'))
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_M_term.rds'))
+
+
+## Act vs Exp by Portfolio
+RV = agg_portfolios(DF, PORT_LBS, 'asofdate')
+aRV = agg_intervals(RV, ASOFS, c('por', 'asofdate'))
+
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_A_por.rds'))
+saveRDS(aRV, file.path(root, CUR_STEP, 'aC_Y_A_por.rds'))
+
+# Act vs Exp by Portfolio - By Tier
+RV = agg_portfolios(DF, PORT_LBS, c('segment', 'asofdate'))
+aRV = agg_intervals(RV, ASOFS, c('segment', 'por', 'asofdate'))
+bRV = agg_intervals(RV, c(DP$Period_LB, DP$Period_Actual_UB), c('segment', 'por', 'asofdate'))
+names(bRV)[3] = 'mul'
+
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_A_por_tier.rds'))
+saveRDS(aRV, file.path(root, CUR_STEP, 'aC_Y_A_por_tier.rds'))
+saveRDS(bRV, file.path(root, CUR_STEP, 'bC_Y_A_por_tier.rds'))
+
+# Act vs Exp by Portfolio - By Term
+RV = agg_portfolios(DF, PORT_LBS, c('term', 'asofdate'))
+aRV = agg_intervals(RV, ASOFS, c('term', 'por', 'asofdate'))
+
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_A_por_term.rds'))
+saveRDS(aRV, file.path(root, CUR_STEP, 'aC_Y_A_por_term.rds'))
+
+
+## Act vs Exp
+RV = prep_df_AvE_plot(DF, 'asofdate')
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_A.rds'))
+
+# Act vs Exp - By Tier
+RV = prep_df_AvE_plot(DF, c('segment', 'asofdate'))
+saveRDS(RV, file.path(root, CUR_STEP, 'C_Y_A_tier.rds'))
 
 # COMMAND ----------
 

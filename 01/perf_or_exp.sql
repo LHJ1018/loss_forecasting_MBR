@@ -113,6 +113,7 @@ select date_trunc('month', l.originationdate) as orig_mth
             end as segment
      , l.term
      , l.cp65_66_flag
+     , l.cp67_flag
      , l.cp68_flag
      , l.fraud_flag
      , case when segment = 'Tier 3' and l.term = 60 then 0
@@ -137,6 +138,6 @@ left join cron_store.dsh_loan_portfolio_expectations e
   and e.sim_name = 'v1.0 Base Case'
   and (e.asofdate <= $ASOF_UB or e.monthonbook <= $MOB_UB)
   
-group by 1, 2, 3, 4, 5, 6, 7, 8, 9
-order by 1, 2, 3, 4, 5, 6, 7, 8, 9
+group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+order by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 ;
