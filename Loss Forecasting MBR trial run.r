@@ -192,7 +192,7 @@ saveRDS(df, file.path(root, CUR_STEP, 'latest_orig.rds'))
 
 # DBTITLE 1,02_build_datasets
 # library(here)
-library(data.table)
+# library(data.table)
 
 root = getwd()
 PRE_STEP = '01'
