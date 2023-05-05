@@ -81,8 +81,6 @@ saveRDS(DP, file.path(root, CUR_STEP, 'date_params.rds'))
 
 # COMMAND ----------
 
-
-DP = readRDS(file.path(root, CUR_STEP, 'date_params.rds'))
 DP
 
 # COMMAND ----------
@@ -108,6 +106,10 @@ df8 = clean_df(df)
 
 # COMMAND ----------
 
+df8
+
+# COMMAND ----------
+
 # df678 256565 df78 218201 df68 207558 df8 164370
 DF678 = df678[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
           cp_68_flag == 1 & price_flag == 1]
@@ -117,6 +119,15 @@ DF68 = df68[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
           cp_68_flag == 1 & price_flag == 1]
 DF8 = df8[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
           cp_68_flag == 1 & price_flag == 1]
+
+# COMMAND ----------
+
+DF8 = df8[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
+          cp_68_flag == 1 & price_flag == 1]
+
+# COMMAND ----------
+
+DF8
 
 # COMMAND ----------
 
