@@ -81,7 +81,7 @@ saveRDS(DP, file.path(root, CUR_STEP, 'date_params.rds'))
 
 # COMMAND ----------
 
-DP = readRDS(file.path(root, CUR_STEP, 'date_params.rds'))
+# DP = readRDS(file.path(root, CUR_STEP, 'date_params.rds'))
 DP
 
 # COMMAND ----------
@@ -215,10 +215,6 @@ DP$Period_Implied_UB = max(df$asofdate)
 
 # COMMAND ----------
 
-DP
-
-# COMMAND ----------
-
 ### Parameters
 PORT_LBS = as.Date(c('2020-01-01', '2021-07-01'))
 ASOFS = c(as.Date('2021-12-31'), DP$Period_LB, DP$Period_Actual_UB)
@@ -233,7 +229,7 @@ ROW_ORDER = c(paste('Tier' , 1:5),
 
 # COMMAND ----------
 
-### Build datasets for Core - CP applied (choose from cp67 or cp68)
+### Build datasets for Core - CP applied (choose most recent CP)
 DF = df[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
           cp_68_flag == 1 & price_flag == 1]
 EXP = exp[segment %in% c('Tier 1', 'Tier 2','Tier 3', 'Tier 4', 'Tier 5') &
@@ -320,7 +316,7 @@ saveRDS(RV, file.path(root, CUR_STEP, 'C_N_A_tier.rds'))
 
 # COMMAND ----------
 
-### Build datasets for Total Portfolio - CP applied (choose from cp67 or cp68)
+### Build datasets for Total Portfolio - CP applied (choose most recent CP)
 DF = df[cp_68_flag == 1]
 EXP = exp[cp_68_flag == 1]
 
@@ -400,6 +396,15 @@ DF = df[cp_65_66_flag == 1 & cp_67_flag == 0]
 ## Act vs Exp
 RV = prep_df_AvE_plot(DF, 'asofdate')
 saveRDS(RV, file.path(root, CUR_STEP, 'CP67_N_A.rds'))
+
+# COMMAND ----------
+
+### Build datasets for reject populations for CP 6.8
+DF = df[cp_67_flag == 1 & cp_68_flag == 0]
+
+## Act vs Exp
+RV = prep_df_AvE_plot(DF, 'asofdate')
+saveRDS(RV, file.path(root, CUR_STEP, 'CP68_N_A.rds'))
 
 # COMMAND ----------
 

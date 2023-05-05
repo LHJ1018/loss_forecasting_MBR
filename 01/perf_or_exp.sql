@@ -117,7 +117,7 @@ select date_trunc('month', l.originationdate) as orig_mth
      , l.cp68_flag
      , l.fraud_flag
      , case when segment = 'Tier 3' and l.term = 60 then 0
-            when segment = 'Tier 4' and l.term >= 48 then 0
+            when segment = 'Tier 4' then 0
             when segment = 'Tier 5' then 0
             else 1 end as price_flag
      
