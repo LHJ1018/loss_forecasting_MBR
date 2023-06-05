@@ -211,7 +211,7 @@ source('build_fns.R')
 
 # NOTE: dsh_loan_portfolio_expectations creates wrong end of month sometimes
 # This step makes sure they match
-# DP$Period_Implied_UB = max(df$asofdate)
+DP$Period_Implied_UB = max(df$asofdate)
 
 # COMMAND ----------
 
