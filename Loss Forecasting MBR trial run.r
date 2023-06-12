@@ -81,7 +81,6 @@ saveRDS(DP, file.path(root, CUR_STEP, 'date_params.rds'))
 
 # COMMAND ----------
 
-# DP = readRDS(file.path(root, CUR_STEP, 'date_params.rds'))
 DP
 
 # COMMAND ----------
