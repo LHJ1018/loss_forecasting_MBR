@@ -19,7 +19,7 @@ PRE_STEP = '02'
 CUR_STEP = '03'
 
 ### Parameters for the whole presentation
-CUR_CP = 6.7
+CUR_CP = 6.8
 DP = readRDS(here(DAT_STEP, 'date_params.rds'))
 
 ## ggplot theme
@@ -35,7 +35,7 @@ theme_update(text = element_text(size = 9),
 Por_Plot_X_LB = as.Date('2021-02-28')
 Por_Plot_X_UB = DP$Period_Actual_UB
 PORT_LBS = readRDS(here(PRE_STEP, 'PORT_LBS.rds'))
-QTRS = c('2021_Q3', '2021_Q4', '2022_Q1', '2022_Q2')
+QTRS = c('2021_Q4', '2022_Q1', '2022_Q2', '2022_Q3')
 ASOFS = readRDS(here(PRE_STEP, 'ASOFS.rds'))
 
 ## Act vs Exp Plots (with delinquency implied forecast)
@@ -70,7 +70,7 @@ summary_table(df)
 
 
 
-## Go-Forward Expectations -- Core T1-T4 -- CP `r CUR_CP`
+## Go-Forward Expectations -- Core T1-T3 -- CP `r CUR_CP`
 ```{r, fig.height=5, fig.width=10.6, dpi=320}
 # Datasets for go forward section - overall
 df_v = readRDS(here(PRE_STEP, 'C_Y_M.rds'))
@@ -106,12 +106,6 @@ forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment =
 ## Go-Forward Expectations -- Tier 3 -- CP `r CUR_CP`
 ```{r, dpi=320, fig.width=10.6, fig.height=5}
 TIER = 'Tier 3'
-forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment == TIER])
-```
-
-## Go-Forward Expectations -- Tier 4 -- CP `r CUR_CP`
-```{r, dpi=320, fig.width=10.6, fig.height=5}
-TIER = 'Tier 4'
 forward_vin_por_plot(DF_V[segment == TIER], DF_P[segment == TIER], aDF[segment == TIER])
 ```
 
@@ -159,7 +153,7 @@ forward_vin_por_plot(DF_V[term == TERM], DF_P[term == TERM], aDF[term == TERM])
 
 ## Section 1: Core, Applying Current Policy
 
-## Core T1-T4 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
+## Core T1-T3 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
 ```{r, dpi=320, fig.width=8, fig.height=5}
 # Dataset
 df = readRDS(here(PRE_STEP, 'C_Y_A.rds'))
@@ -188,12 +182,6 @@ act_vs_exp_w_dlq_plot(DF[segment == TIER])
 ## Tier 3 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
 ```{r, dpi=320, fig.width=8, fig.height=5}
 TIER = 'Tier 3'
-act_vs_exp_w_dlq_plot(DF[segment == TIER])
-```
-
-## Tier 4 -- CP `r CUR_CP` -- Actual vs Expected Charge Off
-```{r, dpi=320, fig.width=8, fig.height=5}
-TIER = 'Tier 4'
 act_vs_exp_w_dlq_plot(DF[segment == TIER])
 ```
 
@@ -344,6 +332,15 @@ act_vs_exp_w_dlq_plot(DF)
 ```{r, dpi=320, fig.width=8, fig.height=5}
 # Dataset
 df = readRDS(here(PRE_STEP, 'CP67_N_A.rds'))
+
+DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
+act_vs_exp_w_dlq_plot(DF)
+```
+
+## CP 6.8
+```{r, dpi=320, fig.width=8, fig.height=5}
+# Dataset
+df = readRDS(here(PRE_STEP, 'CP68_N_A.rds'))
 
 DF = df[between(asofdate, A_vs_E_X_LB, A_vs_E_X_UB)]
 act_vs_exp_w_dlq_plot(DF)
